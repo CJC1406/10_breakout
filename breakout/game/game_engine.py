@@ -5,6 +5,7 @@ GameEngine: owns the paddle, ball, and bricks.
 Task 1: Remove destroyed bricks.
 Task 2: Lives, game over, and restart.
 Task 3: Normal, strong, and unbreakable bricks.
+Task 4: Score and combo multiplier.
 """
 
 import pygame
@@ -23,12 +24,15 @@ BRICK_GAP = 6
 BRICK_TOP_MARGIN = 50
 
 STARTING_LIVES = 3
+POINTS_PER_BRICK = 10
 
 
 class GameEngine:
     def __init__(self):
         self.lives = STARTING_LIVES
         self.game_over = False
+        self.score = 0
+        self.combo_multiplier = 1
         self._reset_game()
 
     def _reset_game(self):
@@ -51,7 +55,6 @@ class GameEngine:
                     BRICK_HEIGHT + BRICK_GAP
                 )
 
-                # Distribute the three brick types across the board.
                 if row == 0 and col % 3 == 0:
                     brick_type = Brick.UNBREAKABLE
                 elif (row + col) % 3 == 0:
@@ -92,6 +95,8 @@ class GameEngine:
         if self.game_over and key == pygame.K_r:
             self.lives = STARTING_LIVES
             self.game_over = False
+            self.score = 0
+            self.combo_multiplier = 1
             self._reset_game()
 
     def update(self):
@@ -107,7 +112,7 @@ class GameEngine:
         ):
             self.ball.bounce_off_paddle(self.paddle.get_rect())
 
-        # Process one brick collision per update.
+        # Handle one brick collision per update.
         for brick in self.bricks[:]:
             if handle_ball_brick_collision(self.ball, brick):
                 destroyed = brick.take_hit()
@@ -115,10 +120,20 @@ class GameEngine:
                 if destroyed:
                     self.bricks.remove(brick)
 
+                    # Award points using the current multiplier.
+                    self.score += (
+                        POINTS_PER_BRICK * self.combo_multiplier
+                    )
+
+                    # Increase the multiplier for the next destroyed brick.
+                    self.combo_multiplier += 1
+
                 break
 
+        # Losing the ball resets the combo.
         if self.ball.is_below(HEIGHT):
             self.lives -= 1
+            self.combo_multiplier = 1
 
             if self.lives <= 0:
                 self.lives = 0
@@ -148,6 +163,20 @@ class GameEngine:
             font,
             f"Lives: {self.lives}",
             (10, 35),
+        )
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Score: {self.score}",
+            (10, 60),
+        )
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Combo multiplier: x{self.combo_multiplier}",
+            (10, 85),
         )
 
         if self.game_over:
