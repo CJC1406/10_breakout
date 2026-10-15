@@ -1,11 +1,9 @@
+
 """
 GameEngine: owns the paddle, ball, and bricks.
 
-Starter version: single brick type, no lives yet, no score/combo yet.
-Ball-brick collision also has a known bug (see game/collision.py) that
-Task 1 asks you to fix. If the ball falls below the paddle, it just
-resets to the starting position with no consequence - that's what
-Task 2 builds on.
+Task 1: Fix ball-brick collision so bricks are removed
+when their remaining hits reach zero.
 """
 
 import pygame
@@ -32,13 +30,23 @@ class GameEngine:
 
     def _build_bricks(self):
         bricks = []
-        total_width = BRICK_COLS * (BRICK_WIDTH + BRICK_GAP) - BRICK_GAP
+
+        total_width = (
+            BRICK_COLS * (BRICK_WIDTH + BRICK_GAP) - BRICK_GAP
+        )
         start_x = (WIDTH - total_width) / 2
+
         for row in range(BRICK_ROWS):
             for col in range(BRICK_COLS):
                 x = start_x + col * (BRICK_WIDTH + BRICK_GAP)
-                y = BRICK_TOP_MARGIN + row * (BRICK_HEIGHT + BRICK_GAP)
-                bricks.append(Brick(x, y, BRICK_WIDTH, BRICK_HEIGHT))
+                y = BRICK_TOP_MARGIN + row * (
+                    BRICK_HEIGHT + BRICK_GAP
+                )
+
+                bricks.append(
+                    Brick(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+                )
+
         return bricks
 
     def _reset_ball(self):
@@ -46,10 +54,13 @@ class GameEngine:
 
     def handle_input(self, keys_pressed):
         dx = 0
+
         if keys_pressed[pygame.K_LEFT]:
             dx -= self.paddle.speed
+
         if keys_pressed[pygame.K_RIGHT]:
             dx += self.paddle.speed
+
         self.paddle.move(dx, WIDTH)
 
     def handle_keydown(self, key):
@@ -59,18 +70,40 @@ class GameEngine:
         self.ball.update()
         self.ball.bounce_off_walls(WIDTH)
 
-        if self.ball.get_rect().colliderect(self.paddle.get_rect()) and self.ball.vy > 0:
+        # Handle paddle collision.
+        if (
+            self.ball.get_rect().colliderect(self.paddle.get_rect())
+            and self.ball.vy > 0
+        ):
             self.ball.bounce_off_paddle(self.paddle.get_rect())
 
-        for brick in self.bricks:
+        # Task 1: Handle brick collisions and remove destroyed bricks.
+        for brick in self.bricks[:]:
             if handle_ball_brick_collision(self.ball, brick):
-                brick.hits_remaining -= 1   # BUG: tracked, but never actually checked to remove the brick
+                brick.hits_remaining -= 1
+
+                if brick.hits_remaining <= 0:
+                    self.bricks.remove(brick)
+
                 break
 
+        # Reset the ball if it falls below the screen.
         if self.ball.is_below(HEIGHT):
             self._reset_ball()
 
     def draw(self, surface, font):
         from game import renderer
-        renderer.draw_scene(surface, self.paddle, self.ball, self.bricks)
-        renderer.draw_text(surface, font, f"Bricks left: {len(self.bricks)}", (10, 10))
+
+        renderer.draw_scene(
+            surface,
+            self.paddle,
+            self.ball,
+            self.bricks,
+        )
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Bricks left: {len(self.bricks)}",
+            (10, 10),
+        )
