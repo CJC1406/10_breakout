@@ -138,8 +138,11 @@ https://github.com/user-attachments/assets/e5a22d47-c183-4c2e-bf18-0b76cc694673
 https://github.com/user-attachments/assets/91e95672-c811-4a01-9501-5035b0929661
 
 )
+## Chat History
 
-Update these paths if your uploaded video files are stored elsewhere in the repository.
+The ChatGPT conversation history documents the debugging process, implementation decisions, and completion of the four lab tasks.
+
+[Download the Lab 4 Chat History](Lab_4_VibeCoding_Chat_History.docx)
 
 ## Project Structure
 
