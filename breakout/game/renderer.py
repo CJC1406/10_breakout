@@ -1,5 +1,6 @@
+
 """
-renderer: all pygame drawing lives here, kept separate from game logic.
+Renderer: all Pygame drawing lives here, separate from game logic.
 """
 
 import pygame
@@ -15,11 +16,44 @@ COLOR_TEXT = (255, 255, 255)
 
 def draw_scene(surface, paddle, ball, bricks):
     surface.fill(COLOR_BG)
+
     for brick in bricks:
-        pygame.draw.rect(surface, brick.color, brick.get_rect())
-        pygame.draw.rect(surface, (10, 10, 15), brick.get_rect(), 1)
-    pygame.draw.rect(surface, COLOR_PADDLE, paddle.get_rect(), border_radius=4)
-    pygame.draw.circle(surface, COLOR_BALL, (int(ball.x), int(ball.y)), ball.radius)
+        rect = brick.get_rect()
+
+        # Use the brick's current durability-based color.
+        color = brick.get_color() if hasattr(brick, "get_color") else brick.color
+
+        pygame.draw.rect(surface, color, rect)
+        pygame.draw.rect(surface, (10, 10, 15), rect, 1)
+
+        # Draw a simple durability indicator for strong bricks.
+        if getattr(brick, "brick_type", None) == "strong":
+            font = pygame.font.Font(None, 16)
+            label = font.render(str(brick.hits_remaining), True, (255, 255, 255))
+            surface.blit(label, label.get_rect(center=rect.center))
+
+        # Mark unbreakable bricks with a diagonal line.
+        if getattr(brick, "brick_type", None) == "unbreakable":
+            pygame.draw.line(
+                surface,
+                (220, 220, 230),
+                rect.topleft,
+                rect.bottomright,
+                2,
+            )
+
+    pygame.draw.rect(
+        surface,
+        COLOR_PADDLE,
+        paddle.get_rect(),
+        border_radius=4,
+    )
+    pygame.draw.circle(
+        surface,
+        COLOR_BALL,
+        (int(ball.x), int(ball.y)),
+        ball.radius,
+    )
 
 
 def draw_text(surface, font, text, pos, color=COLOR_TEXT):
@@ -28,5 +62,7 @@ def draw_text(surface, font, text, pos, color=COLOR_TEXT):
 
 def draw_banner(surface, font, text):
     surf = font.render(text, True, (255, 220, 80))
-    rect = surf.get_rect(center=(surface.get_width() // 2, surface.get_height() // 2))
+    rect = surf.get_rect(
+        center=(surface.get_width() // 2, surface.get_height() // 2)
+    )
     surface.blit(surf, rect)

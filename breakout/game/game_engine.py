@@ -2,8 +2,9 @@
 """
 GameEngine: owns the paddle, ball, and bricks.
 
-Task 1: Remove bricks when their hits are exhausted.
-Task 2: Add lives, game over, and restart.
+Task 1: Remove destroyed bricks.
+Task 2: Lives, game over, and restart.
+Task 3: Normal, strong, and unbreakable bricks.
 """
 
 import pygame
@@ -49,8 +50,23 @@ class GameEngine:
                 y = BRICK_TOP_MARGIN + row * (
                     BRICK_HEIGHT + BRICK_GAP
                 )
+
+                # Distribute the three brick types across the board.
+                if row == 0 and col % 3 == 0:
+                    brick_type = Brick.UNBREAKABLE
+                elif (row + col) % 3 == 0:
+                    brick_type = Brick.STRONG
+                else:
+                    brick_type = Brick.NORMAL
+
                 bricks.append(
-                    Brick(x, y, BRICK_WIDTH, BRICK_HEIGHT)
+                    Brick(
+                        x,
+                        y,
+                        BRICK_WIDTH,
+                        BRICK_HEIGHT,
+                        brick_type=brick_type,
+                    )
                 )
 
         return bricks
@@ -91,11 +107,12 @@ class GameEngine:
         ):
             self.ball.bounce_off_paddle(self.paddle.get_rect())
 
+        # Process one brick collision per update.
         for brick in self.bricks[:]:
             if handle_ball_brick_collision(self.ball, brick):
-                brick.hits_remaining -= 1
+                destroyed = brick.take_hit()
 
-                if brick.hits_remaining <= 0:
+                if destroyed:
                     self.bricks.remove(brick)
 
                 break
@@ -134,9 +151,8 @@ class GameEngine:
         )
 
         if self.game_over:
-            renderer.draw_text(
+            renderer.draw_banner(
                 surface,
                 font,
                 "GAME OVER - Press R to Restart",
-                (WIDTH // 2 - 145, HEIGHT // 2),
             )
